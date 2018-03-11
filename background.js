@@ -4,11 +4,11 @@
 (openYahooMail => {
     browser.browserAction.onClicked.addListener(openYahooMail);
     browser.notifications.onClicked.addListener(openYahooMail);
-})(() => browser.tabs.create({ url: "https://mail.yahoo.com" }));
+})(() => (check(), browser.tabs.create({ url: "https://mail.yahoo.com" })));
 
 
 var lastUnread = 0;
-function check(){
+async function check(){
     browser.browserAction.setIcon({
         path: "icons/loading.png",
     });
