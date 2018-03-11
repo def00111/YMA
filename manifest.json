@@ -28,6 +28,7 @@
     "permissions": [
         "storage",
         "notifications",
+        "contextMenus",
         "https://*.yahoo.com/"
     ]
 }

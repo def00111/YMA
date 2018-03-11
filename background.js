@@ -1,5 +1,20 @@
 // Author: Ngo Kim Phu
 
+browser.contextMenus.create({
+    title: "Check now",
+    contexts: ["browser_action"],
+    onclick: check,
+});
+browser.contextMenus.create({
+    type: "separator",
+    contexts: ["browser_action"],
+});
+browser.contextMenus.create({
+    title: "Options",
+    contexts: ["browser_action"],
+    onclick: () => browser.runtime.openOptionsPage(),
+});
+
 // Open Yahoo! mail when clicking the extension icon or the notification
 (openYahooMail => {
     browser.browserAction.onClicked.addListener(openYahooMail);
