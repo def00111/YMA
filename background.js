@@ -15,11 +15,15 @@ browser.contextMenus.create({
     onclick: () => browser.runtime.openOptionsPage(),
 });
 
+function setBadge(text = '') {
+    browser.browserAction.setBadgeText({ text });
+}
+
 // Open Yahoo! mail when clicking the extension icon or the notification
 (openYahooMail => {
     browser.browserAction.onClicked.addListener(openYahooMail);
     browser.notifications.onClicked.addListener(openYahooMail);
-})(() => (check(), browser.tabs.create({ url: "https://mail.yahoo.com" })));
+})(() => (setBadge(), browser.tabs.create({ url: "https://mail.yahoo.com" })));
 
 
 var lastUnread = 0;
@@ -37,7 +41,7 @@ async function check(){
         })
             .then(() => {
                 text = this.responseXML.title.match(/ (?:\((\d+)\) )?-/)[1] || "";
-                browser.browserAction.setBadgeText({ text });
+                setBadge(text);
                 if (text > lastUnread) {
                     browser.notifications.create("newEmail", {
                         type: 'basic',
