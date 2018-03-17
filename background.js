@@ -1,5 +1,6 @@
 // Author: Ngo Kim Phu
 
+// Right-click menu
 browser.contextMenus.create({
     title: "Check now",
     contexts: ["browser_action"],
@@ -25,7 +26,6 @@ function setBadge(text = '') {
     browser.notifications.onClicked.addListener(openYahooMail);
 })(() => (setBadge(), browser.tabs.create({ url: "https://mail.yahoo.com" })));
 
-
 var lastUnread = 0;
 async function check(){
     browser.browserAction.setIcon({
@@ -43,6 +43,9 @@ async function check(){
                 text = this.responseXML.title.match(/ (?:\((\d+)\) )?-/)[1] || "";
                 setBadge(text);
                 if (text > lastUnread) {
+                    audio.paused || audio.pause();
+                    audio.currentTime = 0;
+                    audio.play();
                     browser.notifications.create("newEmail", {
                         type: 'basic',
                         title: 'Yahoo! Mail Alerter',
@@ -57,19 +60,28 @@ async function check(){
 }
 
 // Initialization after installation
-browser.storage.sync.get('interval')
+browser.storage.sync.get(['interval', 'sound'])
     .then(res => {
         interval = res.interval;
         if (interval === undefined) {
             interval = 300;
-            browser.storage.sync.set({interval});
+            browser.storage.sync.set({ interval });
         } else {
             jobId = setInterval(check, interval * 1000);
-            browser.storage.sync.set({jobId});
+            browser.storage.sync.set({ jobId });
+        }
+
+        sound = res.sound;
+        if (sound === undefined) {
+            sound = 'sounds/default.wav';
+            browser.storage.sync.set({ sound });
+        } else {
+            audio = new Audio(sound);
         }
     });
-// Set new interval job when option changes
+// Update after option changes
 browser.storage.onChanged.addListener(changes => {
+    // Set new interval job when interval option changes
     if (changes.interval && changes.interval.newValue != changes.interval.oldValue) {
         // Schedule new job
         jobId = setInterval(check, changes.interval.newValue * 1000);
@@ -80,6 +92,10 @@ browser.storage.onChanged.addListener(changes => {
                 // Save new job
                 browser.storage.sync.set({jobId});
             });
+    }
+    // Initialize new sound player when sound option changes
+    if (changes.sound && changes.sound.newValue != changes.sound.oldValue) {
+        audio = new Audio(changes.sound.newValue);
     }
 });
 
