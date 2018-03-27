@@ -5,9 +5,18 @@
         <meta charset="utf-8">
     </head>
     <body>
-        <label for="i_interval">Check interval (in secs)</label>
-        <input type=text id="i_interval" value=300>
-        <span id="s_result"></span>
+        <div>
+            <b id="m_error"></b>
+        <div>
+            <label for="i_interval">Check interval (in seconds)</label>
+            <input type=text id="i_interval" value=300>
+            <i id="m_interval"></i>
+        </div>
+        <div>
+            <input type=checkbox id="i_notify">
+            <label for="i_notify">Notification</label>
+            <i id="m_notify"></i>
+        </div>
         <script src="options.js"></script>
     </body>
 </html>

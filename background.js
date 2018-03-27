@@ -42,7 +42,7 @@ async function check(){
             .then(() => {
                 text = this.responseXML.title.match(/ (?:\((\d+)\) )?-/)[1] || "";
                 setBadge(text);
-                if (text > lastUnread) {
+                if (notify && text > lastUnread) {
                     audio.paused || audio.pause();
                     audio.currentTime = 0;
                     audio.play();
@@ -60,7 +60,7 @@ async function check(){
 }
 
 // Initialization after installation
-browser.storage.sync.get(['interval', 'sound'])
+browser.storage.sync.get(['interval', 'sound', 'notify'])
     .then(res => {
         interval = res.interval;
         if (interval === undefined) {
@@ -77,6 +77,12 @@ browser.storage.sync.get(['interval', 'sound'])
             browser.storage.sync.set({ sound });
         } else {
             audio = new Audio(sound);
+        }
+
+        notify = res.notify;
+        if (notify === undefined) {
+            notify = true;
+            browser.storage.sync.set({ notify });
         }
     });
 // Update after option changes
@@ -96,6 +102,10 @@ browser.storage.onChanged.addListener(changes => {
     // Initialize new sound player when sound option changes
     if (changes.sound && changes.sound.newValue != changes.sound.oldValue) {
         audio = new Audio(changes.sound.newValue);
+    }
+    // Update notification preference
+    if (changes.notify) {
+        notify = changes.notify.newValue;
     }
 });
 
