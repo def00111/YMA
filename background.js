@@ -24,7 +24,47 @@ function setBadge(text = '') {
 (openYahooMail => {
     browser.browserAction.onClicked.addListener(openYahooMail);
     browser.notifications.onClicked.addListener(openYahooMail);
-})(() => (setBadge(), browser.tabs.create({ url: "https://mail.yahoo.com" })));
+})(() => {
+    setBadge();
+    (createTab => {
+        // switch to existing Yahoo mail tab (opened by YMA)
+        if (typeof tabId !== 'undefined') {
+            // check that it's not closed
+            browser.tabs.get(tabId)
+                .then(
+                    // set active/focused for tab and for window
+                    tab => browser.tabs.update(tabId, { active: true })
+                        .then(
+                            tab => browser.windows.update(windowId,
+                                { focused: true }),
+                            createTab),
+                    createTab,
+                );
+        } else {
+            createTab();
+        }
+    })(() => ((createWin, createTab, url) =>
+        browser.windows.getCurrent()
+            .then(win => win.incognito
+                    // open Yahoo! mail in a non-private window
+                    ? browser.windows.getAll({ windowTypes: ['normal'] })
+                        .then(wins => (
+                                wins = wins.filter(win => !win.incognito)
+                            ).length == 1
+                                // switch to the only non-private window
+                                ? (createTab({ url, windowId: wins[0].id }),
+                                    browser.windows.update(wins[0].id,
+                                        { focused: true }))
+                                // or create new window
+                                : createWin({ url }))
+                    : createTab({ url }),
+                createTab.bind({ url }))
+    )(createData => browser.windows.create(createData)
+            .then(win => (tabId = win.tabs[0].id, windowId = win.id)),
+        createData => browser.tabs.create(createData)
+            .then(tab => (tabId = tab.id, windowId = tab.windowId)),
+        "https://mail.yahoo.com"));
+});
 
 var lastUnread = 0;
 async function check(){
