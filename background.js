@@ -43,8 +43,15 @@ function setBadge(text = '') {
         } else {
             createTab();
         }
-    })(() => browser.tabs.create({ url: "https://mail.yahoo.com" })
-        .then(tab => (tabId = tab.id, windowId = tab.windowId)));
+    })(() => ((createWin, createTab, url) => {
+        browser.windows.getCurrent()
+            .then(win => (win.incognito ? createWin : createTab)({ url }),
+                createTab.bind({ url }));
+    })(createData => browser.windows.create(createData)
+            .then(win => (tabId = win.tabs[0].id, windowId = win.id)),
+        createData => browser.tabs.create(createData)
+            .then(tab => (tabId = tab.id, windowId = tab.windowId)),
+        "https://mail.yahoo.com"));
 });
 
 var lastUnread = 0;
