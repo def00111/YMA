@@ -43,11 +43,23 @@ function setBadge(text = '') {
         } else {
             createTab();
         }
-    })(() => ((createWin, createTab, url) => {
+    })(() => ((createWin, createTab, url) =>
         browser.windows.getCurrent()
-            .then(win => (win.incognito ? createWin : createTab)({ url }),
-                createTab.bind({ url }));
-    })(createData => browser.windows.create(createData)
+            .then(win => win.incognito
+                    // open Yahoo! mail in a non-private window
+                    ? browser.windows.getAll({ windowTypes: ['normal'] })
+                        .then(wins => (
+                                wins = wins.filter(win => !win.incognito)
+                            ).length == 1
+                                // switch to the only non-private window
+                                ? (createTab({ url, windowId: wins[0].id }),
+                                    browser.windows.update(wins[0].id,
+                                        { focused: true }))
+                                // or create new window
+                                : createWin({ url }))
+                    : createTab({ url }),
+                createTab.bind({ url }))
+    )(createData => browser.windows.create(createData)
             .then(win => (tabId = win.tabs[0].id, windowId = win.id)),
         createData => browser.tabs.create(createData)
             .then(tab => (tabId = tab.id, windowId = tab.windowId)),
