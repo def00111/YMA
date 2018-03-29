@@ -24,7 +24,28 @@ function setBadge(text = '') {
 (openYahooMail => {
     browser.browserAction.onClicked.addListener(openYahooMail);
     browser.notifications.onClicked.addListener(openYahooMail);
-})(() => (setBadge(), browser.tabs.create({ url: "https://mail.yahoo.com" })));
+})(() => {
+    setBadge();
+    (createTab => {
+        // switch to existing Yahoo mail tab (opened by YMA)
+        if (typeof tabId !== 'undefined') {
+            // check that it's not closed
+            browser.tabs.get(tabId)
+                .then(
+                    // set active/focused for tab and for window
+                    tab => browser.tabs.update(tabId, { active: true })
+                        .then(
+                            tab => browser.windows.update(windowId,
+                                { focused: true }),
+                            createTab),
+                    createTab,
+                );
+        } else {
+            createTab();
+        }
+    })(() => browser.tabs.create({ url: "https://mail.yahoo.com" })
+        .then(tab => (tabId = tab.id, windowId = tab.windowId)));
+});
 
 var lastUnread = 0;
 async function check(){
