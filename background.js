@@ -17,7 +17,10 @@ browser.contextMenus.create({
 });
 
 function setBadge(text = '') {
-    browser.browserAction.setBadgeText({ text });
+    return browser.browserAction.setBadgeText({ text });
+}
+function setIcon(path = 'icons/yma-48.png') {
+    return browser.browserAction.setIcon({ path });
 }
 
 // Open Yahoo! mail when clicking the extension icon or the notification
@@ -66,35 +69,44 @@ function setBadge(text = '') {
         "https://mail.yahoo.com"));
 });
 
+function onLoadSuccess(unread) {
+    setIcon();
+    setBadge(unread);
+    if (notify && unread > lastUnread) {
+        audio.paused || audio.pause();
+        audio.currentTime = 0;
+        audio.play();
+        browser.notifications.create("newEmail", {
+            type: 'basic',
+            title: 'Yahoo! Mail Alerter',
+            message: `You have ${unread} unread emails`,
+            iconUrl: 'icons/yma-48.png',
+        });
+    }
+    lastUnread = +unread;
+}
+function onLoadError() {
+    setIcon("icons/loadfail.png");
+}
+function onAuthError() {
+    setIcon("icons/loadfail.png");
+}
+
 var lastUnread = 0;
 async function check(){
-    browser.browserAction.setIcon({
-        path: "icons/loading.png",
-    });
+    setIcon("icons/loading.png");
     let xhr = new XMLHttpRequest();
     xhr.open('GET', "https://mail.yahoo.com/neo/b/launch", true);
     xhr.withCredentials = true;
     xhr.responseType = 'document';
+    xhr.timeout = 60000;
+    xhr.ontimeout = onLoadError;
     xhr.onload = function() {
-        browser.browserAction.setIcon({
-            path: "icons/yma-48.png",
-        })
-            .then(() => {
-                text = this.responseXML.title.match(/ (?:\((\d+)\) )?-/)[1] || "";
-                setBadge(text);
-                if (notify && text > lastUnread) {
-                    audio.paused || audio.pause();
-                    audio.currentTime = 0;
-                    audio.play();
-                    browser.notifications.create("newEmail", {
-                        type: 'basic',
-                        title: 'Yahoo! Mail Alerter',
-                        message: `You have ${text} unread emails`,
-                        iconUrl: 'icons/yma-48.png',
-                    });
-                }
-                lastUnread = +text;
-            });
+        if (match = this.responseXML.title.match(/ (?:\((\d+)\) )?- Y/)) {
+            onLoadSuccess(match[1] || "");
+        } else {
+            onAuthError();
+        }
     };
     xhr.send();
 }
