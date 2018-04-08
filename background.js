@@ -118,7 +118,7 @@ browser.storage.sync.get(['interval', 'notify', 'sound'])
         }
 
         sound = res.sound;
-        if (sound === undefined) {
+        if (sound === undefined || sound === 'sounds/default.wav') {
             sound = 'Default';
             browser.storage.sync.set({ sound });
         } else {
