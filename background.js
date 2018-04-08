@@ -100,7 +100,7 @@ async function check(){
 }
 
 // Initialization after installation
-browser.storage.sync.get(['interval', 'sound', 'notify'])
+browser.storage.sync.get(['interval', 'notify', 'sound'])
     .then(res => {
         interval = res.interval;
         if (interval === undefined) {
@@ -111,18 +111,18 @@ browser.storage.sync.get(['interval', 'sound', 'notify'])
             browser.storage.sync.set({ jobId });
         }
 
-        sound = res.sound;
-        if (sound === undefined) {
-            sound = 'sounds/default.wav';
-            browser.storage.sync.set({ sound });
-        } else {
-            audio = new Audio(sound);
-        }
-
         notify = res.notify;
         if (notify === undefined) {
             notify = true;
             browser.storage.sync.set({ notify });
+        }
+
+        sound = res.sound;
+        if (sound === undefined) {
+            sound = 'Default';
+            browser.storage.sync.set({ sound });
+        } else {
+            audio = new Audio('sounds/' + sound + '.wav');
         }
     });
 // Update after option changes
@@ -139,13 +139,13 @@ browser.storage.onChanged.addListener(changes => {
                 browser.storage.sync.set({jobId});
             });
     }
-    // Initialize new sound player when sound option changes
-    if (changes.sound && changes.sound.newValue != changes.sound.oldValue) {
-        audio = new Audio(changes.sound.newValue);
-    }
     // Update notification preference
     if (changes.notify) {
         notify = changes.notify.newValue;
+    }
+    // Initialize new sound player when sound option changes
+    if (changes.sound && changes.sound.newValue != changes.sound.oldValue) {
+        audio = new Audio('sounds/' + changes.sound.newValue + '.wav');
     }
 });
 
