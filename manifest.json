@@ -25,6 +25,13 @@
     "background": {
         "scripts": ["background.js"]
     },
+    "content_scripts": [
+        {
+            "matches": ["https://*.mail.yahoo.com/*"],
+            "js": ["content_script.js"],
+            "run_at": "document_start"
+        }
+    ],
     "permissions": [
         "storage",
         "notifications",

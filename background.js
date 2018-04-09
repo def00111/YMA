@@ -23,6 +23,16 @@ function setIcon(path = 'icons/yma-48.png') {
     return browser.browserAction.setIcon({ path });
 }
 
+function getYahooTab() {
+    return new Promise((resolve, reject) =>
+        browser.tabs.query({}).then(tabs => Promise.all(
+            tabs.filter(tab => !tab.incognito)
+                .sort((tabA, tabB) => tabB.lastAccessed - tabA.lastAccessed)
+                .map(tab => browser.tabs.sendMessage(tab.id, null)
+                    .then(found => found && resolve(tab), () => {}))
+            ).then(() => reject())));
+}
+
 // Open Yahoo! mail when clicking the extension icon or the notification
 (openYahooMail => {
     browser.browserAction.onClicked.addListener(openYahooMail);
@@ -30,22 +40,17 @@ function setIcon(path = 'icons/yma-48.png') {
 })(() => {
     setBadge();
     (createTab => {
-        // switch to existing Yahoo mail tab (opened by YMA)
-        if (typeof tabId !== 'undefined') {
+        // switch to a Yahoo mail tab if it exists, otherwise create one
+        getYahooTab()
             // check that it's not closed
-            browser.tabs.get(tabId)
-                .then(
-                    // set active/focused for tab and for window
-                    tab => browser.tabs.update(tabId, { active: true })
-                        .then(
-                            tab => browser.windows.update(windowId,
-                                { focused: true }),
-                            createTab),
-                    createTab,
-                );
-        } else {
-            createTab();
-        }
+            .then(tab => browser.tabs.get(tab.id)
+                // set active/focused for window and for tab
+                .then(tab => browser.windows.update(tab.windowId,
+                        { focused: true })
+                    .then(() => browser.tabs.update(tab.id, { active: true }),
+                        createTab),
+                    createTab),
+                createTab);
     })(() => ((createWin, createTab, url) =>
         browser.windows.getCurrent()
             .then(win => win.incognito
@@ -62,10 +67,8 @@ function setIcon(path = 'icons/yma-48.png') {
                                 : createWin({ url }))
                     : createTab({ url }),
                 createTab.bind({ url }))
-    )(createData => browser.windows.create(createData)
-            .then(win => (tabId = win.tabs[0].id, windowId = win.id)),
-        createData => browser.tabs.create(createData)
-            .then(tab => (tabId = tab.id, windowId = tab.windowId)),
+    )(createData => browser.windows.create(createData),
+        createData => browser.tabs.create(createData),
         "https://mail.yahoo.com"));
 });
 
