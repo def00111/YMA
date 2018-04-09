@@ -123,7 +123,7 @@ browser.storage.sync.get(['interval', 'notify', 'sound'])
             browser.storage.sync.set({ interval });
         } else {
             jobId = setInterval(check, interval * 1000);
-            browser.storage.sync.set({ jobId });
+            browser.storage.local.set({ jobId });
         }
 
         notify = res.notify;
@@ -147,11 +147,11 @@ browser.storage.onChanged.addListener(changes => {
         // Schedule new job
         jobId = setInterval(check, changes.interval.newValue * 1000);
         // Remove old job
-        browser.storage.sync.get('jobId')
+        browser.storage.local.get('jobId')
             .then(res => {
                 clearInterval(res.jobId);
                 // Save new job
-                browser.storage.sync.set({jobId});
+                browser.storage.local.set({ jobId });
             });
     }
     // Update notification preference
