@@ -17,7 +17,20 @@ browser.contextMenus.create({
 });
 
 function setBadge(text = '') {
-    browser.browserAction.setBadgeText({ text });
+    return browser.browserAction.setBadgeText({ text });
+}
+function setIcon(path = 'icons/yma-48.png') {
+    return browser.browserAction.setIcon({ path });
+}
+
+function getYahooTab() {
+    return new Promise((resolve, reject) =>
+        browser.tabs.query({}).then(tabs => Promise.all(
+            tabs.filter(tab => !tab.incognito)
+                .sort((tabA, tabB) => tabB.lastAccessed - tabA.lastAccessed)
+                .map(tab => browser.tabs.sendMessage(tab.id, null)
+                    .then(found => found && resolve(tab), () => {}))
+            ).then(() => reject())));
 }
 
 // Open Yahoo! mail when clicking the extension icon or the notification
@@ -27,22 +40,17 @@ function setBadge(text = '') {
 })(() => {
     setBadge();
     (createTab => {
-        // switch to existing Yahoo mail tab (opened by YMA)
-        if (typeof tabId !== 'undefined') {
+        // switch to a Yahoo mail tab if it exists, otherwise create one
+        getYahooTab()
             // check that it's not closed
-            browser.tabs.get(tabId)
-                .then(
-                    // set active/focused for tab and for window
-                    tab => browser.tabs.update(tabId, { active: true })
-                        .then(
-                            tab => browser.windows.update(windowId,
-                                { focused: true }),
-                            createTab),
-                    createTab,
-                );
-        } else {
-            createTab();
-        }
+            .then(tab => browser.tabs.get(tab.id)
+                // set active/focused for window and for tab
+                .then(tab => browser.windows.update(tab.windowId,
+                        { focused: true })
+                    .then(() => browser.tabs.update(tab.id, { active: true }),
+                        createTab),
+                    createTab),
+                createTab);
     })(() => ((createWin, createTab, url) =>
         browser.windows.getCurrent()
             .then(win => win.incognito
@@ -59,42 +67,49 @@ function setBadge(text = '') {
                                 : createWin({ url }))
                     : createTab({ url }),
                 createTab.bind({ url }))
-    )(createData => browser.windows.create(createData)
-            .then(win => (tabId = win.tabs[0].id, windowId = win.id)),
-        createData => browser.tabs.create(createData)
-            .then(tab => (tabId = tab.id, windowId = tab.windowId)),
+    )(createData => browser.windows.create(createData),
+        createData => browser.tabs.create(createData),
         "https://mail.yahoo.com"));
 });
 
+function onLoadSuccess(unread) {
+    setIcon();
+    setBadge(unread);
+    if (notify && unread > lastUnread) {
+        audio.paused || audio.pause();
+        audio.currentTime = 0;
+        audio.play();
+        browser.notifications.create("newEmail", {
+            type: 'basic',
+            title: 'Yahoo! Mail Alerter',
+            message: `You have ${unread} unread emails`,
+            iconUrl: 'icons/yma-48.png',
+        });
+    }
+    lastUnread = +unread;
+}
+function onLoadError() {
+    setIcon("icons/loadfail.png");
+}
+function onAuthError() {
+    setIcon("icons/loadfail.png");
+}
+
 var lastUnread = 0;
 async function check(){
-    browser.browserAction.setIcon({
-        path: "icons/loading.png",
-    });
+    setIcon("icons/loading.png");
     let xhr = new XMLHttpRequest();
     xhr.open('GET', "https://mail.yahoo.com/neo/b/launch", true);
     xhr.withCredentials = true;
     xhr.responseType = 'document';
+    xhr.timeout = 60000;
+    xhr.ontimeout = onLoadError;
     xhr.onload = function() {
-        browser.browserAction.setIcon({
-            path: "icons/yma-48.png",
-        })
-            .then(() => {
-                text = this.responseXML.title.match(/ (?:\((\d+)\) )?-/)[1] || "";
-                setBadge(text);
-                if (notify && text > lastUnread) {
-                    audio.paused || audio.pause();
-                    audio.currentTime = 0;
-                    audio.play();
-                    browser.notifications.create("newEmail", {
-                        type: 'basic',
-                        title: 'Yahoo! Mail Alerter',
-                        message: `You have ${text} unread emails`,
-                        iconUrl: 'icons/yma-48.png',
-                    });
-                }
-                lastUnread = +text;
-            });
+        if (match = this.responseXML.title.match(/ (?:\((\d+)\) )?- Y/)) {
+            onLoadSuccess(match[1] || "");
+        } else {
+            onAuthError();
+        }
     };
     xhr.send();
 }
@@ -108,7 +123,7 @@ browser.storage.sync.get(['interval', 'notify', 'sound'])
             browser.storage.sync.set({ interval });
         } else {
             jobId = setInterval(check, interval * 1000);
-            browser.storage.sync.set({ jobId });
+            browser.storage.local.set({ jobId });
         }
 
         notify = res.notify;
@@ -132,11 +147,11 @@ browser.storage.onChanged.addListener(changes => {
         // Schedule new job
         jobId = setInterval(check, changes.interval.newValue * 1000);
         // Remove old job
-        browser.storage.sync.get('jobId')
+        browser.storage.local.get('jobId')
             .then(res => {
                 clearInterval(res.jobId);
                 // Save new job
-                browser.storage.sync.set({jobId});
+                browser.storage.local.set({ jobId });
             });
     }
     // Update notification preference

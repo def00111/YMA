@@ -6,7 +6,7 @@
         }
     },
     "name": "Yahoo! Mail Alerter",
-    "version": "1.4.2",
+    "version": "1.4.3",
 
     "description": "Alert you when new emails arrived in your Yahoo! Mail box",
 
@@ -25,6 +25,13 @@
     "background": {
         "scripts": ["background.js"]
     },
+    "content_scripts": [
+        {
+            "matches": ["https://*.mail.yahoo.com/*"],
+            "js": ["content_script.js"],
+            "run_at": "document_start"
+        }
+    ],
     "permissions": [
         "storage",
         "notifications",
