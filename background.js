@@ -2,17 +2,17 @@
 
 // Right-click menu
 browser.contextMenus.create({
-    title: "Check now",
-    contexts: ["browser_action"],
+    title: 'Check now',
+    contexts: ['browser_action'],
     onclick: check,
 });
 browser.contextMenus.create({
-    type: "separator",
-    contexts: ["browser_action"],
+    type: 'separator',
+    contexts: ['browser_action'],
 });
 browser.contextMenus.create({
-    title: "Options",
-    contexts: ["browser_action"],
+    title: 'Options',
+    contexts: ['browser_action'],
     onclick: () => browser.runtime.openOptionsPage(),
 });
 
@@ -69,7 +69,7 @@ function getYahooTab() {
                 createTab.bind({ url }))
     )(createData => browser.windows.create(createData),
         createData => browser.tabs.create(createData),
-        "https://mail.yahoo.com"));
+        'https://mail.yahoo.com'));
 });
 
 function onLoadSuccess(unread) {
@@ -79,7 +79,7 @@ function onLoadSuccess(unread) {
         audio.paused || audio.pause();
         audio.currentTime = 0;
         audio.play();
-        browser.notifications.create("newEmail", {
+        browser.notifications.create('newEmail', {
             type: 'basic',
             title: 'Yahoo! Mail Alerter',
             message: `You have ${unread} unread emails`,
@@ -89,24 +89,32 @@ function onLoadSuccess(unread) {
     lastUnread = +unread;
 }
 function onLoadError() {
-    setIcon("icons/loadfail.png");
+    setIcon('icons/loadfail.png');
 }
 function onAuthError() {
-    setIcon("icons/loadfail.png");
+    setIcon('icons/loadfail.png');
 }
 
 var lastUnread = 0;
 async function check(){
-    setIcon("icons/loading.png");
+    setIcon('icons/loading.png');
     let xhr = new XMLHttpRequest();
-    xhr.open('GET', "https://mail.yahoo.com/neo/b/launch", true);
+    xhr.open('GET', 'https://mail.yahoo.com/b/', true);
     xhr.withCredentials = true;
     xhr.responseType = 'document';
     xhr.timeout = 60000;
     xhr.ontimeout = onLoadError;
     xhr.onload = function() {
-        if (match = this.responseXML.title.match(/ (?:\((\d+)\) )?- Y/)) {
-            onLoadSuccess(match[1] || "");
+        let target;
+        try {
+            target = this.response.scripts.nodinJsVars.text;
+        } catch(error) {
+            console.error('Unexpected Yahoo mail webpage content, searching the whole thing', error);
+            target = this.response.documentElement.textContent;
+        }
+
+        if (match = target.match(/[Tt]itle[^\w(]*(?:\((\d+) unread\) - )?\w/)) {
+            onLoadSuccess(match[1] || '');
         } else {
             onAuthError();
         }
