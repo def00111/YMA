@@ -104,6 +104,7 @@ async function check(){
     xhr.responseType = 'document';
     xhr.timeout = 60000;
     xhr.ontimeout = onLoadError;
+    xhr.onerror = onLoadError;
     xhr.onload = function() {
         let target;
         try {
@@ -113,7 +114,7 @@ async function check(){
             target = this.response.documentElement.textContent;
         }
 
-        if (match = target.match(/[Tt]itle[^\w(]*(?:\((\d+) unread\) - )?\w/)) {
+        if (match = target.match(/[Tt]itle[^\w(]*:[^\w(]*(?:\((\d+) unread\) - )?\w/)) {
             onLoadSuccess(match[1] || '');
         } else {
             onAuthError();
