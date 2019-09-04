@@ -6,7 +6,7 @@
         }
     },
     "name": "Yahoo! Mail Alerter",
-    "version": "1.4.5",
+    "version": "1.4.6",
 
     "description": "Alert you when new emails arrived in your Yahoo! Mail box",
 
@@ -36,6 +36,6 @@
         "storage",
         "notifications",
         "contextMenus",
-        "https://*.yahoo.com/"
+        "https://mail.yahoo.com/"
     ]
 }
