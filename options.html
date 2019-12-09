@@ -3,27 +3,29 @@
 <html>
     <head>
         <meta charset="utf-8">
+        <link rel="stylesheet" href="options.css">
     </head>
     <body>
-        <div>
+        <div role="table">
             <b id="m_error"></b>
-        <div>
-            <label for="i_interval">Check interval (in seconds)</label>
-            <input type=text id="i_interval" value=300>
-            <i id="m_interval"></i>
-        </div>
-        <div>
-            <input type=checkbox id="i_notify">
-            <label for="i_notify">Notification</label>
-            <i id="m_notify"></i>
-        </div>
-        <div>
-            <label for="i_sound">Sound</label>
-            <select id="i_sound">
-                <option>Default</option>
-                <option>(None)</option>
-            </select>
-            <i id="m_sound"></i>
+            <div role="tr">
+                <label for="i_interval">Check interval (in seconds)</label>
+                <input type=text id="i_interval" value=300>
+                <i id="m_interval"></i>
+            </div>
+            <div role="tr">
+                <label for="i_notify">Notification</label>
+                <input type=checkbox id="i_notify">
+                <i id="m_notify"></i>
+            </div>
+            <div role="tr">
+                <label for="i_sound">Sound</label>
+                <select id="i_sound">
+                    <option>Default</option>
+                    <option>(None)</option>
+                </select>
+                <i id="m_sound"></i>
+            </div>
         </div>
         <script src="options.js"></script>
     </body>

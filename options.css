@@ -1,0 +1,51 @@
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: #2A2A2E;
+        color: #F9F9FA;
+    }
+}
+
+body {
+    box-sizing: border-box;
+    font-size: medium;
+}
+
+div {
+    margin: .3em;
+}
+
+div[role=table] {
+    display: table;
+}
+
+div[role=tr] {
+    display: table-row;
+}
+
+div[role=tr] > * {
+    display: table-cell;
+    font-size: inherit;
+    margin: .2em;
+    padding: .2em 1em;
+    cursor: pointer;
+}
+
+div[role=tr] > label {
+    text-align: right;
+}
+
+div[role=tr] > input[type=text] {
+    width: 6.75em;
+}
+
+div[role=tr] > input[type=checkbox] {
+    height: 1.75em;
+    width: 1.75em;
+    vertical-align: -0.45em;
+    margin-left: 0.12em;
+}
+
+div[role=tr] > input[type=text]:hover,
+div[role=tr] > select:hover {
+    box-shadow: 0 0 0 1.5px #0078D7;
+}
