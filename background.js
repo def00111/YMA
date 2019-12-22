@@ -74,7 +74,7 @@ function getYahooTab() {
 
 function onLoadSuccess(unread) {
     setIcon();
-    setBadge(unread);
+    setBadge(unread.toString());
     if (notify && unread > lastUnread) {
         audio.paused || audio.pause();
         audio.currentTime = 0;
@@ -86,7 +86,7 @@ function onLoadSuccess(unread) {
             iconUrl: 'icons/yma-48.png',
         });
     }
-    lastUnread = +unread;
+    lastUnread = unread;
 }
 function onLoadError() {
     setIcon('icons/loadfail.png');
@@ -108,14 +108,13 @@ async function check(){
     xhr.onload = function() {
         let target;
         try {
-            target = this.response.scripts.nodinJsVars.text;
+            target = JSON.parse(this.response.scripts.nodinJsVars.text.substring(22));
         } catch(error) {
-            console.error('Unexpected Yahoo mail webpage content, searching the whole thing', error);
-            target = this.response.documentElement.textContent;
+            console.error('Unexpected Yahoo mail webpage content', error);
         }
 
-        if (match = target.match(/[Tt]itle[^\w(]*:[^\w(]*(?:\((\d+) unread\) - )?\w/)) {
-            onLoadSuccess(match[1] || '');
+        if (target) {
+            onLoadSuccess(target.unreadCount);
         } else {
             onAuthError();
         }
